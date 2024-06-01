@@ -37,16 +37,17 @@ def extract_info(playlists):
         tracks = get_tracks(playlist_id)
 
         for song in tracks:
-            track = song['track']
-            song_data.append({
-                'song_id': track['id'],
-                'title': track['name'],
-                'artist': track['artists'][0]['name'],
-                'album': track['album']['name'],
-                'duration': track['duration_ms'] // 1000,
-                'popularity': track['popularity'],
-                'release_date': track['album']['release_date']
-            })
+            track = song.get('track')
+            if track is not None:  # Check if track is not None
+                song_data.append({
+                    'song_id': track.get('id'),
+                    'title': track.get('name'),
+                    'artist': track['artists'][0]['name'],
+                    'album': track['album']['name'],
+                    'duration': track['duration_ms'] // 1000,
+                    'popularity': track['popularity'],
+                    'release_date': track['album']['release_date']
+                })
         
         # Pause to respect API rate limits
         time.sleep(1)
@@ -75,6 +76,7 @@ global_random = {"Hot Country": "37i9dQZF1DX1lVhptIYRda",
     "Peaceful Guitar": "37i9dQZF1DX0jgyAiPl8Af",
     "Classic Road Trip Songs": "37i9dQZF1DWSThc8QnxalT",
     "Relax & Unwind": "37i9dQZF1DX6MOzVr6s0AO"}
+
 # Country-specific playlists: USA, UK, Brazil, France, Japan, India, Spain, South Korea, Australia, Germany
 usa = {
     "Top 50 USA": "37i9dQZEVXbLRQDuF5jeBp",
@@ -106,9 +108,9 @@ india= {
     "Viral 50 India": "37i9dQZEVXbMWDif5SCBJq"
 }
 
-spain= {
-    "Top 50 Spain": "37i9dQZEVXbNF799Z7IWiP",
-    "Viral 50 Spain": "37i9dQZEVXbMfGVuLZomYr"
+italy= {
+    "Top 50 Italy": "37i9dQZEVXbIQnj7RRhdSX",
+    "Viral 50 Italy": "37i9dQZEVXbKbvcwe5owJ1"
 }
 
 southkorea = {
@@ -136,7 +138,7 @@ all_playlists = {
     "france": france,
     "japan": japan,
     "india": india,
-    "spain": spain,
+    "italy": italy,
     "southkorea": southkorea,
     "australia": australia,
     "germany": germany
@@ -144,9 +146,11 @@ all_playlists = {
 
 # Saving these playlists to .csv's for later usage
 for country_name, playlists in all_playlists.items():
-    country_df = extract_info(playlists)
-    country_df.to_csv(f"data/songs/{country_name}.csv", index=False)
-
-    print(f"Processed {country_name} successfully")
+    country_df = extract_info(playlists).drop_duplicates()
+    if not country_df.empty:
+        country_df.to_csv(f"data/songs/{country_name}.csv", index=False)
+        print(f"Processed {country_name} successfully")
+    else:
+        print(f"No data for {country_name}")
 
 
