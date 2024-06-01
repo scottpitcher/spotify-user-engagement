@@ -1,4 +1,4 @@
-# Purpose: Utilise the Spotify Web API to generate user-interaction data based on real song info
+# Purpose: Generate user-interaction data based on real song info from Spotify API
 
 # Importing packages
 import pandas as pd
