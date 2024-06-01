@@ -12,4 +12,7 @@
 
 2. User-Engagement Data: User ID, Song ID, Play Count, Last Played, User Age, User Country
 
-<b> Source:</b> Synthetic data generated from Spotify API'd data, code found in *user_data_generation.py* script
+<b> Source:</b> Synthetic data generated from Spotify API'd data*
+
+
+**For this project, the Spotify API'd data will come from a selection of public, Spotify-created playlists; these playlists will be both Global and Country-specific. Country-specific data will be used to create more accurate synthetic user-data from the API'd songs data, while Global songs will be scattered through all users listening histories. The code for this process can be found in <b> *user_data_generation.py*</b> script*
