@@ -1,4 +1,5 @@
 # Purpose: Generate user-interaction data based on real song info from Spotify API
+# Notes: We will use the country-specific playlists to generate more accurate, specific user data
 
 # Importing packages
 import pandas as pd
