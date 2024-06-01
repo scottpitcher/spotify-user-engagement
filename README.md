@@ -8,7 +8,7 @@
 ## 📊 Data
 1. Songs Data: Song ID, Title, Artist, Album, Duration (s), Popularity, Release Date
 
-<b> Source:</b> [Spotify Web API](https://developer.spotify.com/documentation/web-api) and connecting through spotipy in Python
+<b> Source:</b> [Spotify Web API](https://developer.spotify.com/documentation/web-api) and connecting through spotipy library in Python
 
 2. User-Engagement Data
 
