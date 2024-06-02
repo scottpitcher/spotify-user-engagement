@@ -11,7 +11,7 @@
 # The Global df's will be concatenated along with their respective country
 # A randomizer will select 500 song ID's per user from this dataframe, with replacement
 # Once 500 songs have been chosen, the df will be grouped by song id, a count column will be created, then duplicate songs will be dropped
-# Then, the play counts will be exponentiated to mimic real streaming habits
+# Then, the play counts will be transformed to mimic real streaming habits
 # Thus, each person will have a listening history of 500 plays, but ranging number of songs
 
 # This process is all to create accurate synthetic data
@@ -54,6 +54,21 @@ print(country_dataframes.keys())
 #     if name.endswith('_df'):
 #         print(name)
 
+# Transform play count
+def transform_play_counts(play_counts, power=1.5, scale=10, noise_scale= 5):
+    """Transform fake play counts into more realistic ones using a power transformation with a scale"""
+    transformed_counts = np.power(play_counts, power)
+    transformed_counts = transformed_counts * scale
+
+    # adding some random noise to simulate variability in user behavior
+    noise = np.random.normal(loc=0, scale=noise_scale, size=len(transformed_counts))
+    transformed_counts += noise
+    
+    transformed_counts = np.maximum(transformed_counts, 1) # Ensure there are no negative values; also ensure each play count has at least 1
+    
+    return transformed_counts.astype(int)
+
+
 # Create synthetic data
 def repeat_rows(df, weight):
     """Function to duplicate rows in a dataframe based on weight and popularity"""
@@ -79,10 +94,10 @@ def generate_user_interaction_data(country_name, country_df, global_hot_df= glob
 
         # Add user details
         user_songs['user_id'] = f'{country_name}_user_{user_id}'
-        user_songs['last_played'] = [datetime.now() - timedelta(days=random.randint(0, 90)) for _ in range(len(user_songs))]
-        user_songs['user_age'] = random.randint(18, 65)
+        user_songs['last_played'] = [datetime.now() - timedelta(days=random.randint(0, 90)) for _ in range(len(user_songs))] # Last played as random date within 90 days
+        user_songs['user_age'] = random.randint(18, 65) # Randomly assign age
         user_songs['user_country'] = country_name
-        user_songs['play_count'] = np.exp(user_songs['play_count'])//1 # Exponentiate listening count
+        user_songs['play_count'] = transform_play_counts(user_songs['play_count']) # transform play count using premade function
 
         users_data.append(user_songs)
 
