@@ -114,4 +114,4 @@ for country in countries:
 
 print(user_data.nunique())
 
-user_data.to_csv('data/user_data.csv', index=False)
+user_data.to_csv('data/user/user_data.csv', index=False)
