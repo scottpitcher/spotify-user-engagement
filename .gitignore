@@ -1,2 +1,5 @@
 # Ignore Virtual Environment
 .venv/*
+
+# User data: too large
+data/user/*

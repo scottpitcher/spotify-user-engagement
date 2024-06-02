@@ -3,8 +3,8 @@
 
 # To do this, we will loop over every country used in the playlist dataframe collections
 # Then, over each iteration we will create ~ 100 users per country where each playlist will get the following weightings:
-# Global Hot: 80
-# Global Random: 10
+# Global Hot: 90
+# Global Random: 1
 # Their Country: 60
 # Other Countries: 0
 # The playlists' tracks will be duplicated by those weightings * song popularity
@@ -18,6 +18,9 @@
 # Importing packages
 import pandas as pd
 import os
+import random
+from datetime import datetime, timedelta
+import numpy as np
 directory = "data/songs/"
 
 # Reading in the dataframes
@@ -44,13 +47,54 @@ print(countries)
 del country_dataframes['global_hot']
 del country_dataframes['global_random']
 print(country_dataframes.keys())
-# Checking to make sure all dataframes were read in correctly with the correct variable name
-for name, value in globals().items():
-    if name.endswith('df') :
-        print(name)
+
+# # Checking to make sure all dataframes were read in correctly with the correct variable name
+# for name, value in globals().items():
+#     if name.endswith('_df'):
+#         print(name)
 
 # Create synthetic data
+def repeat_rows(df, weight):
+    """Function to duplicate rows in a dataframe based on weight and popularity"""
+    return df.loc[np.repeat(df.index, df['popularity'] * weight)]
+
+def generate_user_interaction_data(country_name, country_df, global_hot_df= global_hot_df, global_random_df = global_random_df, num_users=100):
+    users_data = []
+
+    for user_id in range(num_users):
+        # Repeat rows according to weights
+        global_hot_rep = repeat_rows(global_hot_df, 90)
+        global_random_rep = repeat_rows(global_random_df, 1)
+        country_rep = repeat_rows(country_df, 60)
+
+        # Combine the DataFrames
+        combined_df = pd.concat([global_hot_rep, global_random_rep, country_rep])
+
+        # Randomly select 500 songs for the user with replacement
+        user_songs = combined_df.sample(n=500, replace=True)
+
+        # Group by song_id and count plays
+        user_songs = user_songs.groupby('song_id').size().reset_index(name='play_count')
+
+        # Add user details
+        user_songs['user_id'] = f'{country_name}_user_{user_id}'
+        user_songs['last_played'] = [datetime.now() - timedelta(days=random.randint(0, 30)) for _ in range(len(user_songs))]
+        user_songs['user_age'] = random.randint(18, 65)
+        user_songs['user_country'] = country_name
+
+        users_data.append(user_songs)
+
+    return pd.concat(users_data)
+
 ## Desired columns: User ID, Song ID, Play Count, Last Played, User Age, User Country
+user_data = pd.DataFrame(columns=['user_id', 'song_id', 'play_count', 'last_played', 'user_age', 'user_country'])
 
 for country in countries:
-    print(country)
+    """Looping over each country so that we can create users from each"""
+    new_users = generate_user_interaction_data(country_name = country, country_df= country_dataframes[country])
+    user_data = pd.concat([user_data, new_users], ignore_index=True)
+    print(f"{country} completed.")
+
+print(user_data.nunique())
+
+user_data.to_csv('data/user_data.csv', index=False)
