@@ -11,6 +11,7 @@
 # The Global df's will be concatenated along with their respective country
 # A randomizer will select 500 song ID's per user from this dataframe, with replacement
 # Once 500 songs have been chosen, the df will be grouped by song id, a count column will be created, then duplicate songs will be dropped
+# Then, the play counts will be exponentiated to mimic real streaming habits
 # Thus, each person will have a listening history of 500 plays, but ranging number of songs
 
 # This process is all to create accurate synthetic data
@@ -78,9 +79,10 @@ def generate_user_interaction_data(country_name, country_df, global_hot_df= glob
 
         # Add user details
         user_songs['user_id'] = f'{country_name}_user_{user_id}'
-        user_songs['last_played'] = [datetime.now() - timedelta(days=random.randint(0, 30)) for _ in range(len(user_songs))]
+        user_songs['last_played'] = [datetime.now() - timedelta(days=random.randint(0, 90)) for _ in range(len(user_songs))]
         user_songs['user_age'] = random.randint(18, 65)
         user_songs['user_country'] = country_name
+        user_songs['play_count'] = np.exp(user_songs['play_count'])//1 # Exponentiate listening count
 
         users_data.append(user_songs)
 
