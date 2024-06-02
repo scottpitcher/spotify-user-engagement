@@ -3,5 +3,6 @@
 
 # .env
 .env
+
 # User data: too large
 data/user/*
