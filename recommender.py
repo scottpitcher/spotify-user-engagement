@@ -150,7 +150,7 @@ if __name__ == "__main__":
     except FileNotFoundError:
         model = train_recommender_model(interaction_data)
     
-    # Generate synthetic data to get playlist information
+    # Generate playlist data to get playlist information
     _, playlist_df = generate_playlist_data()
     
     # Input user ID for recommendation
