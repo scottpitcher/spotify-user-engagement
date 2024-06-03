@@ -144,7 +144,7 @@ def recommend_playlist(user_id, model, interaction_data, playlist_df, num_recomm
     # Create a dataframe with recommended songs and their estimated ratings
     recommended_songs = pd.DataFrame({
         'song_id': [rec.iid for rec in recommendations],
-        'estimated_rating': [rec.est *5 for rec in recommendations]
+        'estimated_rating': [rec.est * 5 for rec in recommendations]
     })
     print(f"Min predicted rating: {recommended_songs['estimated_rating'].min()}")
     print(f"Max predicted rating: {recommended_songs['estimated_rating'].max()}")
