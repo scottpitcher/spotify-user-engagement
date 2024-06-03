@@ -104,11 +104,15 @@ def generate_playlist_data():
 
 def train_recommender_model(interaction_data):
     """Train the SVD model with normalized play counts"""
-    # normalise play counts to a scale of 0 to 5
+    # Normalize play counts to a scale of 0 to 5
     min_play_count = interaction_data['play_count'].min()
     max_play_count = interaction_data['play_count'].max()
     
-    interaction_data['normalized_play_count'] = (interaction_data['play_count'] - min_play_count) / (max_play_count - min_play_count) * 5
+    # Handle rare case where all play counts are the same
+    if min_play_count == max_play_count:
+        interaction_data['normalized_play_count'] = 0  
+    else:
+        interaction_data['normalized_play_count'] = (interaction_data['play_count'] - min_play_count) / (max_play_count - min_play_count) * 5
 
     reader = Reader(rating_scale=(0, 5))
     data = Dataset.load_from_df(interaction_data[['user_id', 'song_id', 'normalized_play_count']], reader)
@@ -121,7 +125,6 @@ def train_recommender_model(interaction_data):
     return model
 
 
-
 def recommend_playlist(user_id, model, interaction_data, playlist_df, num_recommendations=5):
     """Recommend a playlist for a user based on their listening history"""
     if user_id not in interaction_data['user_id'].unique():
@@ -130,34 +133,27 @@ def recommend_playlist(user_id, model, interaction_data, playlist_df, num_recomm
     user_interactions = interaction_data[interaction_data['user_id'] == user_id]
     user_rated_songs = user_interactions['song_id'].tolist()
 
-    # obtain songs the user hasn't rated
+    # Predict ratings for songs the user hasn't rated
     all_songs = interaction_data['song_id'].unique()
     user_unrated_songs = [song for song in all_songs if song not in user_rated_songs]
 
-    # predict ratings for unrated songs
+    # Predict ratings for unrated songs
     predictions = [model.predict(user_id, song_id) for song_id in user_unrated_songs]
     recommendations = sorted(predictions, key=lambda x: x.est, reverse=True)
 
     # Create a dataframe with recommended songs and their estimated ratings
     recommended_songs = pd.DataFrame({
         'song_id': [rec.iid for rec in recommendations],
-        'estimated_rating': [rec.est for rec in recommendations]
+        'estimated_rating': [rec.est *5 for rec in recommendations]
     })
-
-    # Normalize the estimated ratings within the context of the playlists + error checking
-    min_rating = recommended_songs['estimated_rating'].min()
-    max_rating = recommended_songs['estimated_rating'].max()
-    if min_rating != max_rating:  # Ensure division by zero doesn't occur
-        recommended_songs['normalized_rating'] = (recommended_songs['estimated_rating'] - min_rating) / (max_rating - min_rating) * 4 + 1
-    else:
-        recommended_songs['normalized_rating'] = 3  # Arbitrary middle value if all ratings are the same
-
+    print(f"Min predicted rating: {recommended_songs['estimated_rating'].min()}")
+    print(f"Max predicted rating: {recommended_songs['estimated_rating'].max()}")
 
     # Merge with playlist data to find which playlists contain the recommended songs
     playlist_recommendations = pd.merge(recommended_songs, playlist_df, on='song_id')
 
     # Aggregate the estimated ratings per playlist
-    playlist_scores = playlist_recommendations.groupby('playlist_name')['estimated_rating'].sum().reset_index()
+    playlist_scores = playlist_recommendations.groupby('playlist_name')['estimated_rating'].mean().reset_index()
 
     # Sort playlists by their scores and recommend the top ones
     top_playlists = playlist_scores.sort_values(by='estimated_rating', ascending=False).head(num_recommendations)
