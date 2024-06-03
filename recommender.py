@@ -115,28 +115,39 @@ def train_recommender_model(interaction_data):
 
 
 def recommend_playlist(user_id, model, interaction_data, playlist_df, num_recommendations=1):
-    """Main function for playlist recommendations"""
-    user_interactions = interaction_data.loc[user_id]
-    user_unrated_songs = user_interactions[user_interactions == 0].index.tolist()
+    """Recommend a playlist for a user based on their listening history"""
+    if user_id not in interaction_data['user_id'].unique():
+        raise ValueError(f"User ID {user_id} does not exist in the interaction data.")
     
-    # Predict ratings for unrated songs
+    user_interactions = interaction_data[interaction_data['user_id'] == user_id]
+    user_rated_songs = user_interactions['song_id'].tolist()
+
+    # predict ratings for songs the user hasn't rated
+    all_songs = interaction_data['song_id'].unique()
+    user_unrated_songs = [song for song in all_songs if song not in user_rated_songs]
+
+    # predict ratings for unrated songs
     predictions = [model.predict(user_id, song_id) for song_id in user_unrated_songs]
     recommendations = sorted(predictions, key=lambda x: x.est, reverse=True)
-    
-    # Create a dataframe with recommended songs and their estimated ratings
+
+    # create a dataframe with recommended songs and their estimated ratings
     recommended_songs = pd.DataFrame({
         'song_id': [rec.iid for rec in recommendations],
         'estimated_rating': [rec.est for rec in recommendations]
     })
-    
+
     playlist_recommendations = pd.merge(recommended_songs, playlist_df, on='song_id')
-    
+    # Normalize the estimated ratings [0,5]
+    min_rating = recommended_songs['estimated_rating'].min()
+    max_rating = recommended_songs['estimated_rating'].max()
+    recommended_songs['normalized_rating'] = (recommended_songs['estimated_rating'] - min_rating) / (max_rating - min_rating) * 4 + 1
+
     # Aggregate the estimated ratings per playlist
-    playlist_scores = playlist_recommendations.groupby('playlist_name')['estimated_rating'].sum().reset_index()
-    
-    # Sort playlists by their scores and recommend the top one
-    top_playlists = playlist_scores.sort_values(by='estimated_rating', ascending=False).head(num_recommendations)
-    
+    playlist_scores = playlist_recommendations.groupby('playlist_name')['normalized_rating'].sum().reset_index()
+
+    # Sort playlists by their scores, recommend num_recommendations
+    top_playlists = playlist_scores.sort_values(by='normalized_rating', ascending=False).head(num_recommendations)
+
     return top_playlists
 
 # Executing the function
