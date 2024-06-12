@@ -78,9 +78,10 @@ def generate_user_interaction_data(country_name, country_df, global_hot_df= glob
     users_data = []
 
     for user_id in range(num_users):
-        # Repeat rows according to weights
-        global_hot_rep = repeat_rows(global_hot_df, 90)
-        global_random_rep = repeat_rows(global_random_df, 1)
+        user_age = random.randint(14, 65) # Randomly assign age
+        # Repeat rows according to weights (taking user age into account for trending vs. older songs)
+        global_hot_rep = repeat_rows(global_hot_df, 100-user_age)
+        global_random_rep = repeat_rows(global_random_df, user_age)
         country_rep = repeat_rows(country_df, 60)
 
         # Combine the DataFrames
@@ -95,7 +96,7 @@ def generate_user_interaction_data(country_name, country_df, global_hot_df= glob
         # Add user details
         user_songs['user_id'] = f'{country_name}_user_{user_id}'
         user_songs['last_played'] = [datetime.now() - timedelta(days=random.randint(0, 90)) for _ in range(len(user_songs))] # Last played as random date within 90 days
-        user_songs['user_age'] = random.randint(18, 65) # Randomly assign age
+        user_songs['user_age'] = user_age
         user_songs['user_country'] = country_name
         user_songs['play_count'] = transform_play_counts(user_songs['play_count']) # transform play count using premade function
 
